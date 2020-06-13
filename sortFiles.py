@@ -1,4 +1,4 @@
-import shutil, os, glob, itertools
+import shutil, os, glob, itertools, pyautogui
 
 def getFilenames():
     files = []
@@ -7,14 +7,15 @@ def getFilenames():
         files.append(filename)
     for filename in files:
         split_files.append(filename.split('.'))
-    #sort by file extension (second element)
+
+    #sort by file extension (last element)
     split_files.sort(key = lambda x: x[-1])
     
     return split_files
 
 def createDict(split_files):
     dict_filenames = {}
-    #group by extension 
+    #group by file extensions
     for key, group in itertools.groupby(split_files, lambda x: x[-1]):
         for item in group:
             #create a key if not in dict - item in brackets to convert it in list format
@@ -27,22 +28,34 @@ def createDict(split_files):
 
 def makeDirs(dict_filenames):
     for key, value in dict_filenames.items():
+        #is this outer try/except redundant?
         try:
             if not os.path.exists(key):
                 os.makedirs(key)
             for filename in value:
-                shutil.move('.'.join(filename), key)
-                #shutil.move(filename[0]+'.'+filename[1], key)
-        except:
-            print(key)
-            print('Error in makeDirs()')
+                #prevent sorting the script itself
+                if filename[0] == 'sortFiles':
+                    continue
+                try:
+                    shutil.move('.'.join(filename), key)
+                except Exception as e:
+                    print('Error in shutil.move:',e)
+        except Exception as e:
+            print(value,key)
+            print('Error in makedirs:',e)
 
 def confirmExecute():
-    #get path of file
+    #get the path to the script
     scriptpath = os.path.realpath(__file__)
-    print('Current directory is: '+ scriptpath)
-    selection = input('Confirm sorting (y/n)')
-    if selection.lower() == 'y':
+
+    #console confirmation
+    #print('Current directory is: '+ scriptpath)
+    #selection = input('Confirm sorting (y/n)')
+
+    #confimation via message box ( OK / Cancel )
+    selection = pyautogui.confirm(f'Current location to sort:\n{scriptpath}')
+
+    if selection.lower() == 'ok':
         return True
     else:
         return False
